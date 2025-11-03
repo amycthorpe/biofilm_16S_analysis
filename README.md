@@ -3,15 +3,18 @@
 R scripts to process and analyse bacterial 16S rRNA gene sequencing data from river biofilms.  
 
 ### Initial processing
-- Raw sequencing reads are first processed using DADA2 according to XXX_script.R
+- Primers are removed from raw sequencing reads with [cutadapt](https://cutadapt.readthedocs.io/en/stable/) using DADA2/cutadapt_script.R
+- Reads are then processed according to the [DADA2 workflow for big data](https://benjjneb.github.io/dada2/bigdata.html) using DADA2/dada2_script.R
+- Taxonomy is assigned according to the [SILVA v138.2](https://www.arb-silva.de/) reference database using DADA2/merging_and_taxonomy_script.R
+- Rarefaction and filtering is performed using DADA2/rarefaction_filtering_script.R
 - Raw reads have been deposited in the European Nucleotide Archive (ENA) at EMBL-EBI under accession number PRJEB90117
 
 ### Analysis and visualisation
-Outputs (available in the Zenodo archive) can then be analysed with the provided R scripts to:
-   * Assess the diversity, community structure, and composition of the core community using community_structure_script.R
-   * Run ordination and correlation analyses to identify environmental drivers using ordination_script.R and correlation_script.R
-   * Construct co-occurrence networks using module_network_script.R
-   * Identify environmental thresholds and indicator taxa using titan_run.R, visualised using titan_plots.R
+Outputs (available in the [Zenodo archive](https://doi.org/10.5281/zenodo.17515763)) can then be analysed with the provided scripts to:
+   * Assess the diversity, community structure, and composition of the core community using analysis_scripts/community_structure script.R
+   * Run ordination and correlation analyses to identify environmental drivers using analysis_scripts/ordination_script.R and analysis_scripts/correlations_script.R
+   * Construct co-occurrence networks using analysis_scripts/module_network_script.R
+   * Identify environmental thresholds and indicator taxa using analysis_scripts/titan_run.R, visualised using analysis_scripts/titan_plots.R
 
 ### Citation
 BioRxiv link to be added soon
