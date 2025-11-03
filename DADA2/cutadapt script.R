@@ -9,7 +9,7 @@ library(Biostrings)
 packageVersion("Biostrings")
 
 #set paths
-path <- "/hdd0/amytho/EA_biofilm_nextseqruns/EA_biofilm_16S_ITS_2023/16S/Data" 
+path <- "/path/to/data/directory" 
 list.files(path)
 
 fnFs <- sort(list.files(path, pattern = "_R1_001.fastq", full.names = TRUE))
