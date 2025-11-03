@@ -12,8 +12,7 @@ library(TITAN2)
 set.seed(123)
 
 
-path <- "/hdd0/amytho/EA_biofilm_nextseqruns/16S_manuscript_analysis_neohuxley/titan"
-path <- "C:/Users/amytho/OneDrive - UKCEH/EA biofilms/Metabarcoding/16S_manuscript_analysis"
+path <- "/path/to/data/directory"
 
 
 # import data
