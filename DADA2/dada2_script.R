@@ -1,20 +1,19 @@
 # DADA2 for big data
 # EA biofilms 16S - 2023 samples
-# repeated for consistency for manuscript 24.03.25
 
 
 library(dada2); packageVersion("dada2")
 
 
 # File parsing
-# cd /hdd0/amytho/EA_optimisation_samples/16S/Data/cutadapt/
+# cd /path/to/data/directory
 # mkdir cutadapt_F
 # mkdir cutadapt_R
 # cp *R1_001.fastq.gz cutadapt_F -vrf
 # cp *R2_001.fastq.gz cutadapt_R -vrf
 
-pathF <- "/hdd0/amytho/EA_biofilm_nextseqruns/EA_biofilm_16S_ITS_2023/16S/Data/cutadapt/cutadapt_F" # CHANGE ME to the directory containing your demultiplexed forward-read fastqs
-pathR <- "/hdd0/amytho/EA_biofilm_nextseqruns/EA_biofilm_16S_ITS_2023/16S/Data/cutadapt/cutadapt_R" # CHANGE ME ...
+pathF <- "/path/to/data/directory/cutadapt/cutadapt_F" # CHANGE ME to the directory containing your demultiplexed forward-read fastqs
+pathR <- "/path/to/data/directory/cutadapt/cutadapt_R" # CHANGE ME ...
 list.files(pathF)
 list.files(pathR)
 
@@ -41,12 +40,12 @@ out <- filterAndTrim(fwd=file.path(pathF, fastqFs), filt=file.path(filtpathF, fa
                      truncLen=c(230,220), maxEE=2, truncQ=2, maxN=0, rm.phix=TRUE,
                      compress=TRUE, verbose=TRUE, multithread=TRUE)
 
-write.csv(out,file="/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript/run_2023/output/filtered_out.csv") # check reads out
+write.csv(out,file="/path/to/output/filtered_out.csv") # check reads out
 
 
 # File parsing
-filtpathF <- "/hdd0/amytho/EA_biofilm_nextseqruns/EA_biofilm_16S_ITS_2023/16S/Data/cutadapt/cutadapt_F/filtered" # CHANGE ME to the directory containing your filtered forward fastqs
-filtpathR <- "/hdd0/amytho/EA_biofilm_nextseqruns/EA_biofilm_16S_ITS_2023/16S/Data/cutadapt/cutadapt_R/filtered" # CHANGE ME ...
+filtpathF <- "/path/to/data/directory/cutadapt/cutadapt_F/filtered" # CHANGE ME to the directory containing your filtered forward fastqs
+filtpathR <- "/path/to/data/directory/cutadapt/cutadapt_R/filtered" # CHANGE ME ...
 
 filtFs <- list.files(filtpathF, pattern="_R1_001.fastq", full.names = TRUE)
 filtRs <- list.files(filtpathR, pattern="_R2_001.fastq", full.names = TRUE)
@@ -93,7 +92,7 @@ dim(seqtab.nochim) # check table dimensions
 sum(seqtab.nochim)/sum(seqtab) # check proportion non-chimera (0.72 with trimleft suggesting some primers remain, 0.84 with cutadapt so improved but still relatively high for 16S so included minFold to reduce FP)
 
 seqtab16S=t(seqtab.nochim)
-write.csv(seqtab16S, file = "/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript/run_2023/output/seqtab_16S.csv")
+write.csv(seqtab16S, file = "/path/to/output/seqtab_16S.csv")
 
 #track number of reads that made it through each step in the pipeline. This is a great place to do a last sanity check. Outside of filtering (depending on how stringent you want to be) there should no step in which a majority of reads are lost. If a majority of reads failed to merge, you may need to revisit the  truncLen parameter used in the filtering step and make sure that the truncated reads span your amplicon. If a majority of reads failed to pass the chimera check, you may need to revisit the removal of primers, as the ambiguous nucleotides in unremoved primers interfere with chimera identification:
 getN <- function(x) sum(getUniques(x))
@@ -101,4 +100,4 @@ track <- cbind(out, sapply(mergers, getN), rowSums(seqtab), rowSums(seqtab.nochi
 rownames(track) <- sample.names
 head(track)
 
-write.csv(track,"/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript/run_2023/output/track_reads_16S_cutadapt.csv")
+write.csv(track,"//path/to/output/track_reads_16S_cutadapt.csv")
