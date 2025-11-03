@@ -7,7 +7,7 @@ library(dplyr)
 library(vegan)
 library(seqinr)
 
-setwd("/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript/")
+setwd("/path/to/output")
 
 set.seed(123)
 
@@ -18,9 +18,6 @@ counts_tab<-read.table("output/counts_16S_merged.tsv",header=T,row.names=1,sep="
 meta<-read.table("seq_metadata_all_amplicons.csv",header=T,sep=",",fill=T,check.names=F)
 
 meta <- meta[!is.na(meta$`16S_ID`) & meta$`16S_ID` != "", ] # remove non-16S samples
-
-# correct taxonomy headings (18S only)
-#colnames(tax_tab) <- c("Domain", "Supergroup", "Division", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 
 
 # subset dataset
