@@ -1,19 +1,18 @@
 # DADA2 for big data
 # EA biofilms 16S - merging runs
-# repeated for consistency for manuscript 24.03.25
 
 
 library(dada2); packageVersion("dada2")
 
 set.seed(100)
 
-output <- "/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript"
+output <- "/path/to/output"
 
 
 # load seq tabs
-seqtab.optim <- read.table("/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript/run_optimisation/output/seqtab_16S.csv",header=T,row.names=1,sep=",",check.names=FALSE)
-seqtab.2021_22 <- read.table("/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript/run_2021_22/output/seqtab_16S.csv",header=T,row.names=1,sep=",",check.names=FALSE)
-seqtab.2023 <- read.table("/hdd0/amytho/EA_biofilm_nextseqruns/EA_16S_all_DADA2_repeated_for_manuscript/run_2023/output/seqtab_16S.csv",header=T,row.names=1,sep=",",check.names=FALSE)
+seqtab.optim <- read.table("/path/to/output/run_optimisation/output/seqtab_16S.csv",header=T,row.names=1,sep=",",check.names=FALSE)
+seqtab.2021_22 <- read.table("/path/to/output/run_2021_22/output/seqtab_16S.csv",header=T,row.names=1,sep=",",check.names=FALSE)
+seqtab.2023 <- read.table("/path/to/output/run_2023/output/seqtab_16S.csv",header=T,row.names=1,sep=",",check.names=FALSE)
 
 # transpose so samples are rows
 seqtab.optim <- t(seqtab.optim)
