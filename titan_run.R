@@ -1,5 +1,5 @@
 # biofilm analysis for manuscripts - 16S
-# titan on R bash neohuxley
+# titan on R bash
 
 
 # load libraries
@@ -12,8 +12,7 @@ library(TITAN2)
 set.seed(123)
 
 
-path <- "/hdd0/amytho/EA_biofilm_nextseqruns/16S_manuscript_analysis_neohuxley/titan"
-path <- "C:/Users/amytho/OneDrive - UKCEH/EA biofilms/Metabarcoding/16S_manuscript_analysis"
+path <- "path/to/data_directory"
 
 
 # import data
