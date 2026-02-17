@@ -14,6 +14,7 @@ library(patchwork)
 library(parallel)
 library(ggrepel)
 library(RColorBrewer)
+library(phyloseq)
 
 
 set.seed(123)
@@ -389,3 +390,212 @@ adonis_result <- adonis2(formula,
                          by="margin")
 
 adonis_result
+
+
+# taxa biplot
+# label unassigned genera
+first_assigned_label <- function(Family, Order, Class, Phylum) {
+  levels <- list(Family, Order, Class, Phylum)
+  for (lvl in levels) {
+    if (!is.na(lvl) && lvl != "unassigned") {
+      return(lvl)}}
+  return(NA)}
+
+tax_tab2 <- tax_tab
+tax_tab2$taxon <- rownames(tax_tab2)
+
+tax_tab2 <- tax_tab2 %>%
+  mutate(new_label = if_else(Genus != "unassigned", Genus,
+                             paste("unassigned", pmap_chr(list(Family, Order, Class, Phylum), first_assigned_label))),
+         taxon_label = if_else(Genus != "unassigned",
+                               glue("'{taxon}: '*italic('{new_label}')"), # make genus italic (but not 'unassigned')
+                               glue("'{taxon}: {new_label}'")))
+
+# phyloseq object
+TAX <- tax_table(as.matrix(tax_tab2))
+ASV <- otu_table(ASV_hel, taxa_are_rows = F)
+samples <- sample_data(meta)
+ps <- phyloseq(ASV, TAX, samples)
+ps
+
+ps_rel <- transform_sample_counts(ps, function(x) x / sum(x))
+
+# phylum level
+ps_phylum<-tax_glom(ps_rel, "Phylum")
+
+otu_tab <- as.data.frame(ps_phylum@otu_table)
+taxonomy <- as.data.frame(ps_phylum@tax_table)
+
+nmds.fit_tax <- envfit(nmds, otu_tab,
+                       perm=999,
+                       na.rm=T)
+
+nmds.fit_tax
+
+# NMDS with ggplot
+df <- nmds.fit_tax$vectors # get datafrane of vector r and p values
+df_r <- as.data.frame(df[["r"]])
+df_pvals <- as.data.frame(df[["pvals"]])
+df_arrows <- as.data.frame(df[["arrows"]])
+nmds.fit_df <- cbind(df_arrows,df_r,df_pvals)
+colnames(nmds.fit_df)[3] <- "rvalue"
+colnames(nmds.fit_df)[4] <- "pvalue"
+
+nmds.fit_df <- nmds.fit_df %>% # add significance levels
+  mutate(significance = case_when(
+    pvalue > 0.05 ~ "ns",
+    pvalue <= 0.05 & pvalue > 0.01 ~ "*",
+    pvalue <= 0.01 & pvalue > 0.001 ~ "**",
+    pvalue <= 0.001 ~ "***"
+  ))
+
+write.csv(nmds.fit_df, "output/envfit_phylum.csv")
+
+nmds.fit_sub <- nmds.fit_df %>% # filter vectors
+  filter(., pvalue <= 0.05, rvalue >= 0.2)
+
+nmds_scores <- as.data.frame(nmds[["points"]]) # extract scores
+nmds_scores_meta <- merge(nmds_scores,meta_merged,by="row.names") %>% # combine with meta
+  column_to_rownames(.,"Row.names")
+
+vectors <- as.data.frame(scores(nmds.fit_tax, "vectors")) * ordiArrowMul(nmds.fit_tax) # set up vector arrows
+arrowhead = arrow(length = unit(0.02, "npc"))
+vectors_sub <- vectors[rownames(vectors) %in% rownames(nmds.fit_sub), ]
+vectors_sub <- merge(vectors_sub, taxonomy, by="row.names")
+
+nmds_scores_meta$season <- factor(nmds_scores_meta$season, levels = c("Spring", "Autumn"))
+
+phylum <- ggplot(nmds_scores_meta, aes(x = MDS1, y = MDS2)) +
+  theme_bw() +
+  geom_point(size = 1, alpha = 0.6, shape = 16, aes(colour = season)) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 0.4),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 5, colour = "black"),
+        legend.title = element_text(size = 6, colour = "black"),
+        legend.position = "none",
+        axis.text = element_text(size = 5, colour = "black"),
+        axis.ticks = element_line(size = 0.2),
+        axis.title = element_text(size = 6, colour = "black"),
+        plot.title = element_text(size = 6, colour = "black")) +
+  geom_vline(xintercept = c(0,0), linetype = "dashed", colour = "black", size = 0.4) +
+  geom_hline(yintercept = c(0,0), linetype = "dashed", colour = "black", size = 0.4) +
+  geom_segment(data = vectors_sub, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), 
+               size = 0.3, arrow = arrowhead, colour = "black") +
+  # geom_text(data = vectors, aes(x = 1.1*NMDS1, y = 1.1*NMDS2),
+  #           label = row.names(vectors), size = 2, colour="black") +
+  # geom_label(data = vectors, aes(x = 1.2*NMDS1, y = 1.2*NMDS2),
+  #            label = row.names(vectors), size = 2, colour="black") +
+  geom_text_repel(data = vectors_sub, aes(x = NMDS1, y = NMDS2),
+                  label = vectors_sub$Phylum, size = 1.5, colour = "black",
+                  max.overlaps = Inf, segment.colour = NA) +
+  labs(x = "NMDS1", y = "NMDS2") +
+  scale_colour_manual(name = "Season", values = c("forestgreen", "steelblue")) +
+  scale_x_continuous(limits = c(-2, 2), breaks = seq(-2, 2, 1))
+
+phylum
+
+
+# genus level
+ps_genera<-tax_glom(ps_rel, "Genus")
+
+otu_tab <- as.data.frame(ps_genera@otu_table)
+taxonomy <- as.data.frame(ps_genera@tax_table)
+
+taxonomy_sub <- taxonomy %>%
+  filter(Genus != "unassigned") 
+
+otu_tab <- t(otu_tab)
+otu_tab_sub <- otu_tab[rownames(otu_tab) %in% rownames(taxonomy_sub), ]
+otu_tab_sub <- otu_tab_sub %>% 
+  t() %>% 
+  as.data.frame()
+
+top_genera <- otu_tab_sub %>% 
+  summarise(across(everything(), mean)) %>% 
+  pivot_longer(everything(), names_to = "ASV", values_to = "mean_rel_abund") %>% 
+  arrange(desc(mean_rel_abund)) %>% 
+  slice_head(n=100) %>% 
+  pull(ASV)
+
+otu_tab_sub <- otu_tab_sub %>% select(all_of(top_genera))
+
+nmds.fit_tax <- envfit(nmds, otu_tab_sub,
+                       perm=999,
+                       na.rm=T)
+
+nmds.fit_tax
+
+# NMDS with ggplot
+df <- nmds.fit_tax$vectors # get datafrane of vector r and p values
+df_r <- as.data.frame(df[["r"]])
+df_pvals <- as.data.frame(df[["pvals"]])
+df_arrows <- as.data.frame(df[["arrows"]])
+nmds.fit_df <- cbind(df_arrows,df_r,df_pvals)
+colnames(nmds.fit_df)[3] <- "rvalue"
+colnames(nmds.fit_df)[4] <- "pvalue"
+
+nmds.fit_df <- nmds.fit_df %>% # add significance levels
+  mutate(significance = case_when(
+    pvalue > 0.05 ~ "ns",
+    pvalue <= 0.05 & pvalue > 0.01 ~ "*",
+    pvalue <= 0.01 & pvalue > 0.001 ~ "**",
+    pvalue <= 0.001 ~ "***"
+  ))
+
+write.csv(nmds.fit_df, "output/envfit_genera.csv")
+
+nmds.fit_sub <- nmds.fit_df %>% # filter vectors
+  filter(., pvalue <= 0.05, rvalue >= 0.2)
+
+nmds_scores <- as.data.frame(nmds[["points"]]) # extract scores
+nmds_scores_meta <- merge(nmds_scores,meta_merged,by="row.names") %>% # combine with meta
+  column_to_rownames(.,"Row.names")
+
+vectors <- as.data.frame(scores(nmds.fit_tax, "vectors")) * ordiArrowMul(nmds.fit_tax) # set up vector arrows
+arrowhead = arrow(length = unit(0.02, "npc"))
+vectors_sub <- vectors[rownames(vectors) %in% rownames(nmds.fit_sub), ]
+vectors_sub <- merge(vectors_sub, taxonomy, by="row.names")
+
+nmds_scores_meta$season <- factor(nmds_scores_meta$season, levels = c("Spring", "Autumn"))
+
+genus <- ggplot(nmds_scores_meta, aes(x = MDS1, y = MDS2)) +
+  theme_bw() +
+  geom_point(size = 1, alpha = 0.6, shape = 16, aes(colour = season)) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 0.4),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 5, colour = "black"),
+        legend.title = element_text(size = 6, colour = "black"),
+        legend.position = "none",
+        axis.text = element_text(size = 5, colour = "black"),
+        axis.ticks = element_line(size = 0.2),
+        axis.title = element_text(size = 6, colour = "black"),
+        plot.title = element_text(size = 6, colour = "black")) +
+  geom_vline(xintercept = c(0,0), linetype = "dashed", colour = "black", size = 0.4) +
+  geom_hline(yintercept = c(0,0), linetype = "dashed", colour = "black", size = 0.4) +
+  geom_segment(data = vectors_sub, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2), 
+               size = 0.3, arrow = arrowhead, colour = "black") +
+  # geom_text(data = vectors, aes(x = 1.1*NMDS1, y = 1.1*NMDS2),
+  #           label = row.names(vectors), size = 2, colour="black") +
+  # geom_label(data = vectors, aes(x = 1.2*NMDS1, y = 1.2*NMDS2),
+  #            label = row.names(vectors), size = 2, colour="black") +
+  geom_text_repel(data = vectors_sub, aes(x = NMDS1, y = NMDS2),
+                  label = vectors_sub$Genus, size = 1.5, colour = "black",
+                  max.overlaps = Inf, segment.colour = NA) +
+  labs(x = "NMDS1", y = "NMDS2") +
+  scale_colour_manual(name = "Season", values = c("forestgreen", "steelblue")) +
+  scale_x_continuous(limits = c(-2, 2), breaks = seq(-2, 2, 1))
+
+genus
+
+patchwork <- wrap_plots(phylum, genus) +
+  theme(legend.position = "none") +
+  plot_layout(axes = "collect")
+
+patchwork
+
+ggsave("output/figures/NMDS_tax_patchwork.png", patchwork, width = 180, height = 90, units = "mm", dpi = 600)
+ggsave("output/figures/NMDS_tax_patchwork.pdf", patchwork, width = 180, height = 90, units = "mm", dpi = 600)
