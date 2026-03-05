@@ -10,7 +10,7 @@ Raw reads have been deposited in the European Nucleotide Archive (ENA) at EMBL-E
 - Rarefaction and filtering is performed using DADA2/rarefaction_filtering_script.R
 
 ### Analysis and visualisation
-Outputs (available in the [Zenodo archive](https://doi.org/10.5281/zenodo.17515763)) can then be analysed with the provided scripts to:
+Outputs (available in the [Zenodo archive](https://zenodo.org/records/18668846)) can then be analysed with the provided scripts to:
    * Assess the diversity, community structure, and composition of the core vs non-core communities using analysis_scripts/community_structure_script.R
    * Assign predicted functions using [FAPROTAX](https://pages.uoregon.edu/slouca/LoucaLab/archive/FAPROTAX/lib/php/index.php) and analysis_scripts/functions_script.R
    * Run ordination and correlation analyses to identify environmental drivers using analysis_scripts/ordination_script.R and analysis_scripts/correlations_script.R
