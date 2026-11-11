@@ -18,4 +18,4 @@ Outputs (available in the [Zenodo archive](https://zenodo.org/records/18668846))
    * Identify environmental thresholds and indicator taxa using analysis_scripts/titan_run.R, visualised using analysis_scripts/titan_plots.R
 
 ### Citation
-https://www.biorxiv.org/content/10.1101/2025.11.03.686311v1
+Thorpe et al. (2026) River Microbiomes as Sentinels of National-Scale Freshwater Ecosystems. Global Change Biology 32, no. 3: e70809. https://doi.org/10.1111/gcb.70809.
